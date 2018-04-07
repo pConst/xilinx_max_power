@@ -206,7 +206,7 @@ end
 // 4. Loading VCCIO rail(s)
 // assign all IO to provide high-speed output
 
-`define INFER_IO  // defined by default
+//`define INFER_IO
 `ifdef INFER_IO
 
 

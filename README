@@ -1,0 +1,32 @@
+
+
+'Xilinx_max_power' project
+
+
+designed for Digilent Arty-Z7020 board
+based on ZINQ-7000 series SOC, part number xc7z020clg400-1
+but can be used for any modern Xilinx FPGA or SOC chip
+
+
+THIS CODE CAN CAUSE SERIOUS DAMAGE FOR YOUR FPGA, POWER COMPONENTS, OR
+ENTIRE DEVICE. PLEASE USE IT WITH CAUTION
+
+
+- Use Xilinx power estimator (XPE) tool first. It will estimate currents
+and dissipated heat results.
+- Make sure you dont overload power system of your device. FPGA will refuse
+to boot up if VCCINT power rail voltage got depleted. See
+https://forums.xilinx.com/t5/Configuration/Error-Labtools-27-3165-End-of-startup-status-LOW/td-p/737029
+- Control temperatures of FPGA chip and power supply chains during the test.
+- On Ultarscale chips, use SYSMON for monitoring.
+- Dont exceed recommended FPGA Tj. Additional active cooling can be beneficial.
+- Increase load iteratively.
+
+// 1. Loading power by SRLs (shift registers based on LUTs)
+// The simplest way to load Xilinx FPGA is to infer SRL16 or SRL32  primitives
+
+// 2. Loading power by integrated block RAM blocks
+
+// 3. Loading power by registers
+// Dont use this feature untill you cant drain enough power by previous options
+// because this step takes A LOT of time to synthesize and implement
