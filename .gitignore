@@ -1,0 +1,12 @@
+
+# Vivado files
+#================================
+impact_xdb/
+*.cache/
+*.hw/
+*.runs/
+*.sim/
+
+*.jou
+*.log
+*.str
