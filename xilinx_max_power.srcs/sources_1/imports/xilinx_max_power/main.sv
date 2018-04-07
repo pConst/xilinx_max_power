@@ -10,9 +10,80 @@
 
 module main(
 
-    input clk,
-    input [4:0] btn
+    input clk,  // 125 MHz
+    input [1:0] sw,
+
+    // RGB LEDs
+    output led4_r,led4_g,led4_b,
+    output led5_r,led5_g,led5_b,
+
+    output [3:0] led,
+    input [4:0] btn,
+
+    // Pmod Headers
+    output [4:1] ja_p, [4:1] ja_n,
+    output [4:1] jb_p, [4:1] jb_n,
+
+    // Audio Out
+    output aud_pwm, aud_sd,
+
+    //Crypto SDA
+    output crypto_sda,
+
+    // HDMI RX Signals
+    output hdmi_rx_cec,
+    output hdmi_rx_clk_n,
+    output hdmi_rx_clk_p,
+    output [2:0] hdmi_rx_d_p,
+    output [2:0] hdmi_rx_d_n,
+    output hdmi_rx_hpd,
+    output hdmi_rx_scl,
+    output hdmi_rx_sda,
+
+    // HDMI TX Signals
+    output hdmi_tx_cec,
+    output hdmi_tx_clk_n,
+    output hdmi_tx_clk_p,
+    output [2:0] hdmi_tx_d_p,
+    output [2:0] hdmi_tx_d_n,
+    output hdmi_tx_hpdn,        // hpdn!
+    output hdmi_tx_scl,
+    output hdmi_tx_sda,
+
+    // Single Ended Analog Inputs
+    input [5:0] ck_an_p,
+    input [5:0] ck_an_n,
+
+    // Digital I/O On Outer Analog Header
+    output [5:0] ck_a,
+    // Digital I/O On Inner Analog Header
+    //
+
+    // Digital I/O Low
+    output [13:0] ck_io_low,
+
+    // Digital I/O High
+    output [41:26] ck_io_high,
+
+    output ck_miso, ck_mosi, ck_sck, ck_ss,
+    output ck_scl, ck_sda,
+    output ck_ioa
 );
+
+
+// THIS CODE CAN CAUSE SERIOUS DAMAGE FOR YOUR FPGA, POWER COMPONENTS, OR
+// ENTIRE DEVICE. PLEASE USE IT WITH CAUTION
+//
+// - Use Xilinx power estimator (XPE) tool first. It will estimate currents
+// and dissipated heat results.
+// - Make sure you dont overload power system of your device. FPGA will refuse
+// to boot up if VCCINT power rail voltage got depleted. See
+// https://forums.xilinx.com/t5/Configuration/Error-Labtools-27-3165-End-of-startup-status-LOW/td-p/737029
+// - Control temperatures of FPGA chip and power supply chains during the test.
+// - On Ultarscale chips, use SYSMON for monitoring.
+// - Dont exceed recommended FPGA Tj. Additional active cooling can be beneficial.
+// - Increase load iteratively.
+
 
 logic rst;
 assign rst = btn[0];  // external reset
@@ -130,6 +201,72 @@ end
       .CLR( 1'b0 ),  // 1-bit Asynchronous clear input
       .D( sig100tr )       // 1-bit Data input
     );
+`endif
+
+// 4. Loading VCCIO rail(s)
+// assign all IO to provide high-speed output
+
+`define INFER_IO  // defined by default
+`ifdef INFER_IO
+
+
+    OBUFDS #(
+      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+      .SLEW("FAST")           // Specify the output slew rate
+    ) bhdmi_rx_clk (
+      .O( hdmi_rx_clk_p ),     // Diff_p output (connect directly to top-level port)
+      .OB( hdmi_rx_clk_n ),   // Diff_n output (connect directly to top-level port)
+      .I( hdmi_rx_clk )      // Buffer input
+    );
+
+    logic [2:0] hdmi_rx_d;
+    OBUFDS #(
+      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+      .SLEW("FAST")           // Specify the output slew rate
+    ) bhdmi_rx_d[2:0] (
+      .O( hdmi_rx_d_p[2:0] ),     // Diff_p output (connect directly to top-level port)
+      .OB( hdmi_rx_d_n[2:0] ),   // Diff_n output (connect directly to top-level port)
+      .I( hdmi_rx_d[2:0] )      // Buffer input
+    );
+
+    OBUFDS #(
+      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+      .SLEW("FAST")           // Specify the output slew rate
+    ) bhdmi_tx_clk (
+      .O( hdmi_tx_clk_p ),     // Diff_p output (connect directly to top-level port)
+      .OB( hdmi_tx_clk_n ),   // Diff_n output (connect directly to top-level port)
+      .I( hdmi_tx_clk )      // Buffer input
+    );
+
+    logic [2:0] hdmi_tx_d;
+    OBUFDS #(
+      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+      .SLEW("FAST")           // Specify the output slew rate
+    ) bhdmi_tx_d[2:0] (
+      .O( hdmi_tx_d_p[2:0] ),     // Diff_p output (connect directly to top-level port)
+      .OB( hdmi_tx_d_n[2:0] ),   // Diff_n output (connect directly to top-level port)
+      .I( hdmi_tx_d[2:0] )      // Buffer input
+    );
+
+    assign led[3:0] = {4{clk500}};
+
+    assign ja_p[4:1] = {5{clk500}};
+    assign ja_n[4:1] = {5{clk500}};
+    assign jb_p[4:1] = {5{~clk500}};
+    assign jb_n[4:1] = {5{~clk500}};
+
+    assign hdmi_rx_clk = clk500;
+    assign hdmi_rx_d[2:0] = {3{clk500}};
+    assign hdmi_tx_clk = ~clk500;
+    assign hdmi_tx_d[2:0] = {3{~clk500}};
+
+    assign ck_a[5:0] = {6{clk500}};
+
+    assign ck_io_low[13:0] = {14{clk500}};
+    assign ck_io_high[41:26] = {16{~clk500}};
+
+    assign {ck_miso, ck_mosi, ck_sck, ck_ss, ck_scl, ck_sda, ck_ioa} = {7{clk500}};
+
 `endif
 
 endmodule
