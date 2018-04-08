@@ -32,8 +32,8 @@ module main(
 
     // HDMI RX Signals
     output hdmi_rx_cec,
-    output hdmi_rx_clk_n,
     output hdmi_rx_clk_p,
+    output hdmi_rx_clk_n,
     output [2:0] hdmi_rx_d_p,
     output [2:0] hdmi_rx_d_n,
     output hdmi_rx_hpd,
@@ -42,8 +42,8 @@ module main(
 
     // HDMI TX Signals
     output hdmi_tx_cec,
-    output hdmi_tx_clk_n,
     output hdmi_tx_clk_p,
+    output hdmi_tx_clk_n,
     output [2:0] hdmi_tx_d_p,
     output [2:0] hdmi_tx_d_n,
     output hdmi_tx_hpdn,        // hpdn!
@@ -107,6 +107,7 @@ always_ff @(posedge clk500) begin
 end
 
 
+// ----------------------------------------------------------------------------
 // 1. Loading power by SRLs (shift registers based on LUTs)
 // The simplest way to load Xilinx FPGA is to infer SRL16 or SRL32  primitives
 
@@ -127,6 +128,8 @@ end
     );
 `endif
 
+
+// ----------------------------------------------------------------------------
 // 2. Loading power by integrated block RAM blocks
 
 //`define INFER_BRAMS
@@ -183,6 +186,7 @@ end
     );
 `endif
 
+// ----------------------------------------------------------------------------
 // 3. Loading power by registers
 // Dont use this feature untill you cant drain enough power by previous options
 // because this step takes A LOT of time to synthesize and implement
@@ -203,50 +207,52 @@ end
     );
 `endif
 
+// ----------------------------------------------------------------------------
 // 4. Loading VCCIO rail(s)
 // assign all IO to provide high-speed output
 
+logic hdmi_rx_clk;
+OBUFDS #(
+  .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+  .SLEW("FAST")           // Specify the output slew rate
+) bhdmi_rx_clk (
+  .O( hdmi_rx_clk_p ),     // Diff_p output (connect directly to top-level port)
+  .OB( hdmi_rx_clk_n ),   // Diff_n output (connect directly to top-level port)
+  .I( hdmi_rx_clk )      // Buffer input
+);
+
+logic [2:0] hdmi_rx_d;
+OBUFDS #(
+  .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+  .SLEW("FAST")           // Specify the output slew rate
+) bhdmi_rx_d[2:0] (
+  .O( hdmi_rx_d_p[2:0] ),     // Diff_p output (connect directly to top-level port)
+  .OB( hdmi_rx_d_n[2:0] ),   // Diff_n output (connect directly to top-level port)
+  .I( hdmi_rx_d[2:0] )      // Buffer input
+);
+
+logic hdmi_tx_clk;
+OBUFDS #(
+  .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+  .SLEW("FAST")           // Specify the output slew rate
+) bhdmi_tx_clk (
+  .O( hdmi_tx_clk_p ),     // Diff_p output (connect directly to top-level port)
+  .OB( hdmi_tx_clk_n ),   // Diff_n output (connect directly to top-level port)
+  .I( hdmi_tx_clk )      // Buffer input
+);
+
+logic [2:0] hdmi_tx_d;
+OBUFDS #(
+  .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
+  .SLEW("FAST")           // Specify the output slew rate
+) bhdmi_tx_d[2:0] (
+  .O( hdmi_tx_d_p[2:0] ),     // Diff_p output (connect directly to top-level port)
+  .OB( hdmi_tx_d_n[2:0] ),   // Diff_n output (connect directly to top-level port)
+  .I( hdmi_tx_d[2:0] )      // Buffer input
+);
+
 //`define INFER_IO
 `ifdef INFER_IO
-
-
-    OBUFDS #(
-      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
-      .SLEW("FAST")           // Specify the output slew rate
-    ) bhdmi_rx_clk (
-      .O( hdmi_rx_clk_p ),     // Diff_p output (connect directly to top-level port)
-      .OB( hdmi_rx_clk_n ),   // Diff_n output (connect directly to top-level port)
-      .I( hdmi_rx_clk )      // Buffer input
-    );
-
-    logic [2:0] hdmi_rx_d;
-    OBUFDS #(
-      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
-      .SLEW("FAST")           // Specify the output slew rate
-    ) bhdmi_rx_d[2:0] (
-      .O( hdmi_rx_d_p[2:0] ),     // Diff_p output (connect directly to top-level port)
-      .OB( hdmi_rx_d_n[2:0] ),   // Diff_n output (connect directly to top-level port)
-      .I( hdmi_rx_d[2:0] )      // Buffer input
-    );
-
-    OBUFDS #(
-      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
-      .SLEW("FAST")           // Specify the output slew rate
-    ) bhdmi_tx_clk (
-      .O( hdmi_tx_clk_p ),     // Diff_p output (connect directly to top-level port)
-      .OB( hdmi_tx_clk_n ),   // Diff_n output (connect directly to top-level port)
-      .I( hdmi_tx_clk )      // Buffer input
-    );
-
-    logic [2:0] hdmi_tx_d;
-    OBUFDS #(
-      .IOSTANDARD("DEFAULT"), // Specify the output I/O standard
-      .SLEW("FAST")           // Specify the output slew rate
-    ) bhdmi_tx_d[2:0] (
-      .O( hdmi_tx_d_p[2:0] ),     // Diff_p output (connect directly to top-level port)
-      .OB( hdmi_tx_d_n[2:0] ),   // Diff_n output (connect directly to top-level port)
-      .I( hdmi_tx_d[2:0] )      // Buffer input
-    );
 
     assign led[3:0] = {4{clk500}};
 
